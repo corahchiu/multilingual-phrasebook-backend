@@ -7,9 +7,6 @@ const bodyParser = require('body-parser');
 const logger = require('morgan');
 const neo4j = require('neo4j-driver').v1;
 
-// Get our API routes
-const api = require('./server/routes/api');
-
 const app = express();
 
 const driver = neo4j.driver('bolt://localhost', neo4j.auth.basic('neo4j', 'pizza'));
@@ -21,9 +18,6 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 // Point static path to dist
 app.use(express.static(path.join(__dirname, '../multilingual-phrasebook/dist')));
-
-// Set our api routes
-app.use('/api', api);
 
 // Register a callback to know if driver creation was successful:
 driver.onCompleted = function () {
@@ -37,32 +31,35 @@ driver.onError = function (error) {
   console.log('Driver instantiation failed', error);
 };
 
-app.get('/', function(req,res){
-  console.log('hello');
 // Get all available languages from the database and put in an array on init
-const languagesPromise = session.run(
-  'MATCH (n) RETURN n.language ORDER BY n.language'
-);
+app.get('/', function(req,res){
+  
+  const languagesPromise = session.run(
+    'MATCH (n) RETURN n.language ORDER BY n.language'
+  );
 
-languagesPromise.then(result => {
-  session.close();
-  let allLanguageValues = [];
-  for (i=0; i<result.records.length; i++){    
-    const singleRecord = result.records[i];
-    const node = singleRecord.get(0);
-    allLanguageValues.push(node);
-  }
-  var languages = [...new Set(allLanguageValues)];
-  console.log(languages);
-  return languages;
-  driver.close();
-});
+  languagesPromise.then(result => {
+    session.close();
+    let allLanguageValues = [];
+    for (i=0; i<result.records.length; i++){    
+      const singleRecord = result.records[i];
+      const node = singleRecord.get(0);
+      allLanguageValues.push(node);
+    }
+    var languages = [...new Set(allLanguageValues)];
+    console.log(languages);
+    return languages;
+    driver.close();
+  });
+
 })
+
 app.post('/addphrase', function(req,res){
   var phrase = req.body.phrase;
   session.run(`CREATE (n:${phrase})`).then(() => {
-   session.close();
+    session.close();
   });
+  
 })
 
 // Catch all other routes and return the index file
