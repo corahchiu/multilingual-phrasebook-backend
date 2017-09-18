@@ -15,9 +15,13 @@ const session = driver.session();
 // Parsers for POST data
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
 // Point static path to dist
-app.use(express.static(path.join(__dirname, '../multilingual-phrasebook/dist')));
+// app.use(express.static(path.join(__dirname, '../multilingual-phrasebook/dist')));
 
 // Register a callback to know if driver creation was successful:
 driver.onCompleted = function () {
@@ -33,26 +37,43 @@ driver.onError = function (error) {
 
 // Get all available languages from the database and put in an array on init
 app.get('/', function(req,res){
-  
-  const languagesPromise = session.run(
-    'MATCH (n) RETURN n.language ORDER BY n.language'
-  );
-
-  languagesPromise.then(result => {
-    session.close();
-    let allLanguageValues = [];
-    for (i=0; i<result.records.length; i++){    
-      const singleRecord = result.records[i];
-      const node = singleRecord.get(0);
-      allLanguageValues.push(node);
-    }
-    var languages = [...new Set(allLanguageValues)];
-    console.log(languages);
-    return languages;
-    driver.close();
-  });
-
+  session
+    .run('MATCH (n) RETURN DISTINCT n.language ORDER BY n.language') //this is a promise
+    .then(result => {
+      session.close();
+      let allLanguageValues = [];
+      for (i=0; i<result.records.length; i++){    
+        const singleRecord = result.records[i];
+        const node = singleRecord.get(0);
+        allLanguageValues.push(node);
+      }
+      // var languages = [...new Set(allLanguageValues)];
+      // console.log(languages);
+      // res.send(languages);
+      res.send(allLanguageValues);
+    }) 
+    .catch(function(err){
+      console.log(err);
+    })
 })
+
+// Search phrase in main language column
+app.post('/search', function(req, res){
+  var phrase = req.body.phrase;
+  var language = req.body.language;
+  session
+    .run(`MATCH (n {phrase:"${phrase}", language: "${language}"}) RETURN n`)
+    .then(result => {
+      session.close();
+      const singleRecord = result.records[0];
+      const node = singleRecord.get(0);
+      res.send(node);
+    })  
+    .catch(function(err){
+      console.log(err);
+    })
+});
+
 
 app.post('/addphrase', function(req,res){
   var phrase = req.body.phrase;
@@ -61,24 +82,6 @@ app.post('/addphrase', function(req,res){
   });
   
 })
-
-// Catch all other routes and return the index file
-app.get('/search', function(req, res){
-  var phrase = req.body.phrase;
-  
-  session
-    .run(`MATCH (n:${phrase} {Language: ${language}}) RETURN n`)
-    .then(function(result){
-      result.records.forEach(function(record){
-        console.log(record);
-      })  
-      .catch(function(err){
-        console.log(err);
-      })
-    })
-  res.sendFile(path.join(__dirname, '../multilingual-phrasebook/dist/index.html'));
-});
-
 
 /**
  * Get port from environment and store in Express.
