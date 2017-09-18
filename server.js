@@ -62,23 +62,25 @@ app.post('/search', function(req, res){
     .run(`MATCH (n {phrase:'${phrase}', language:'${language}'})-[:translation]->(b) RETURN n,b`)
     .then(result => {
       session.close();
+      let allPhrases = {};
       // get original phrase
-      let allPhrases = [];
       const singleRecord = result.records[0];      
       const node = singleRecord.get(0);
-      allPhrases.push(node.properties.phrase);
+      allPhrases.main = node.properties.phrase;
+      allPhrases.target = [];
       // get translated phrases
       for (i=0; i<result.records.length; i++){    
         const singleRecord = result.records[i];
         const node = singleRecord.get(1);
-        allPhrases.push(node.properties.phrase);
+        allPhrases.target.push(node.properties.phrase);
       }
-      // console.log(allPhrases);      
+      console.log(allPhrases);      
       res.send(allPhrases);
     })  
     .catch(function(err){
       console.log(err);
     })
+  // // get searched phrase
   // session
   //   .run(`MATCH (n {phrase:"${phrase}", language: "${language}"}) RETURN n`)
   //   .then(result => {
