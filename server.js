@@ -47,9 +47,6 @@ app.get('/', function(req,res){
         const node = singleRecord.get(0);
         allLanguageValues.push(node);
       }
-      // var languages = [...new Set(allLanguageValues)];
-      // console.log(languages);
-      // res.send(languages);
       res.send(allLanguageValues);
     }) 
     .catch(function(err){
@@ -62,16 +59,37 @@ app.post('/search', function(req, res){
   var phrase = req.body.phrase;
   var language = req.body.language;
   session
-    .run(`MATCH (n {phrase:"${phrase}", language: "${language}"}) RETURN n`)
+    .run(`MATCH (n {phrase:'${phrase}', language:'${language}'})-[:translation]->(b) RETURN n,b`)
     .then(result => {
       session.close();
-      const singleRecord = result.records[0];
+      // get original phrase
+      let allPhrases = [];
+      const singleRecord = result.records[0];      
       const node = singleRecord.get(0);
-      res.send(node);
+      allPhrases.push(node.properties.phrase);
+      // get translated phrases
+      for (i=0; i<result.records.length; i++){    
+        const singleRecord = result.records[i];
+        const node = singleRecord.get(1);
+        allPhrases.push(node.properties.phrase);
+      }
+      // console.log(allPhrases);      
+      res.send(allPhrases);
     })  
     .catch(function(err){
       console.log(err);
     })
+  // session
+  //   .run(`MATCH (n {phrase:"${phrase}", language: "${language}"}) RETURN n`)
+  //   .then(result => {
+  //     session.close();
+  //     const singleRecord = result.records[0];
+  //     const node = singleRecord.get(0);
+  //     res.send(node);
+  //   })  
+  //   .catch(function(err){
+  //     console.log(err);
+  //   })
 });
 
 
