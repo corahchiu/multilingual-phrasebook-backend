@@ -54,113 +54,70 @@ app.get('/', function(req,res){
     })
 })
 
-// Search phrase in main language column
 app.post('/search', function(req, res){
-  // trying to get all the translated phrase in an array
+  // get all equivalent phrases
   var phrase = req.body.phrase;
   var language = req.body.language;
-  var targetLanguage = req.body.targetLanguage;
-
-  // todo now I need to get the targetLanguage from the target language column
   session
-  .run(`MATCH (n {phrase:'${phrase}', language:'${language}'})-[:translation]->(b {language:'English'}) RETURN n,b`)  
-  // .run(`MATCH (n {phrase:'${phrase}', language:'${language}'})-[:translation]->(b {language:'${targetLanguage}'}) RETURN n,b`)
-  .then(result => {
-    session.close();
-    let allPhrases = {};
-    // get original phrase
-    const singleRecord = result.records[0];    
-    const mainNode = singleRecord.get(0);
-    allPhrases[mainNode.properties.language] = mainNode.properties.phrase;
+    .run(`MATCH (n {phrase:'${phrase}', language:'${language}'})-[:translation]->(b) RETURN n,b`)
+    .then(result => {
+      session.close();
+      let allPhrases = {};
+      // get original phrase
+      const singleRecord = result.records[0];      
+      const node = singleRecord.get(0);
+      allPhrases[node.properties.language] = node.properties.phrase;
 
-    for (i=0; i<result.records.length; i++){    
-            const singleRecord = result.records[i];
-            const targetNode = singleRecord.get(1);
-            allPhrases[targetNode.properties.language] = []    
-    }
-    for (i=0; i<result.records.length; i++){    
-      const singleRecord = result.records[i];
-      const targetNode = singleRecord.get(1);
-      allPhrases[targetNode.properties.language].push(targetNode.properties.phrase);
-    }
+      for (i=0; i<result.records.length; i++){    
+                  const singleRecord = result.records[i];
+                  const targetNode = singleRecord.get(1);
+                  allPhrases[targetNode.properties.language] = []    
+      }
+      for (i=0; i<result.records.length; i++){    
+        const singleRecord = result.records[i];
+        const targetNode = singleRecord.get(1);
+        allPhrases[targetNode.properties.language].push(targetNode.properties.phrase);
+      }
+      console.log(allPhrases);      
+      res.json(allPhrases);
+    })  
+    .catch(function(err){
+      console.log(err);
+    })
 
-    // allPhrases[targetNode.properties.language] = []
-    // allPhrases[targetNode.properties.language].push(targetNode.properties.phrase);
-    console.log(allPhrases);      
-    res.send(allPhrases); //What is being sent to service?
-  })  
-  .catch(function(err){
-    console.log(err);
-  })
-
-  // //result: { Hungarian: 'Szia', English: [ 'Hello' ] }
+  // // Don't delete. For future reference. This is sepecific for wed2
+  // // get translated phrases of one specific language and put in an array with the language as key
   // var phrase = req.body.phrase;
   // var language = req.body.language;
   // var targetLanguage = req.body.targetLanguage;
 
   // session
-  // .run(`MATCH (n {phrase:'${phrase}', language:'${language}'})-[:translation]->(b {language:'English'}) RETURN n,b`)  
-  // // .run(`MATCH (n {phrase:'${phrase}', language:'${language}'})-[:translation]->(b {language:'${targetLanguage}'}) RETURN n,b`)
+  // .run(`MATCH (n {phrase:'${phrase}', language:'${language}'})-[:translation]->(b {language:'${targetLanguage}'}) RETURN n,b`)
   // .then(result => {
   //   session.close();
+  //   console.log(result); // give undefined for target language. why?
   //   let allPhrases = {};
   //   // get original phrase
   //   const singleRecord = result.records[0];    
   //   const mainNode = singleRecord.get(0);
-  //   const targetNode = singleRecord.get(1);
   //   allPhrases[mainNode.properties.language] = mainNode.properties.phrase;
-  //   allPhrases[targetNode.properties.language] = []
-  //   allPhrases[targetNode.properties.language].push(targetNode.properties.phrase);
+
+  //   for (i=0; i<result.records.length; i++){    
+  //           const singleRecord = result.records[i];
+  //           const targetNode = singleRecord.get(1);
+  //           allPhrases[targetNode.properties.language] = []    
+  //   }
+  //   for (i=0; i<result.records.length; i++){    
+  //     const singleRecord = result.records[i];
+  //     const targetNode = singleRecord.get(1);
+  //     allPhrases[targetNode.properties.language].push(targetNode.properties.phrase);
+  //   }
   //   console.log(allPhrases);      
-  //   res.send(allPhrases); //What is being sent to service?
+  //   res.send(allPhrases);
   // })  
   // .catch(function(err){
   //   console.log(err);
   // })
-
-
-  // // get all equivalent phrases
-  // var phrase = req.body.phrase;
-  // var language = req.body.language;
-  // session
-  //   .run(`MATCH (n {phrase:'${phrase}', language:'${language}'})-[:translation]->(b) RETURN n,b`)
-  //   .then(result => {
-  //     session.close();
-  //     let allPhrases = {};
-  //     // get original phrase
-  //     const singleRecord = result.records[0];      
-  //     const node = singleRecord.get(0);
-  //     allPhrases[node.properties.language] = node.properties.phrase;
-  //     // allPhrases.target = [];
-  //     // get translated phrases
-  //     for (i=0; i<result.records.length; i++){    
-  //       const singleRecord = result.records[i];
-  //       const node = singleRecord.get(1);
-  //       // allPhrases.target.push(node.properties.phrase);
-  //       allPhrases[node.properties.language] = node.properties.phrase;
-        
-  //     }
-  //     console.log(allPhrases);      
-  //     res.json(allPhrases);
-  //   })  
-  //   .catch(function(err){
-  //     console.log(err);
-  //   })
-
-  // // get searched phrase
-  // var phrase = req.body.phrase;
-  // var language = req.body.language;
-  // session
-  //   .run(`MATCH (n {phrase:"${phrase}", language: "${language}"}) RETURN n`)
-  //   .then(result => {
-  //     session.close();
-  //     const singleRecord = result.records[0];
-  //     const node = singleRecord.get(0);
-  //     res.send(node);
-  //   })  
-  //   .catch(function(err){
-  //     console.log(err);
-  //   })
 });
 
 
@@ -172,18 +129,9 @@ app.post('/addphrase', function(req,res){
   
 })
 
-/**
- * Get port from environment and store in Express.
- */
 const port = process.env.PORT || '3000';
 app.set('port', port);
 
-/**
- * Create HTTP server.
- */
 const server = http.createServer(app);
 
-/**
- * Listen on provided port, on all network interfaces.
- */
 server.listen(port, () => console.log(`API running on localhost:${port}`));
