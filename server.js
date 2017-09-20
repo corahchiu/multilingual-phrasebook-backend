@@ -85,7 +85,7 @@ app.post('/search', function(req, res){
       console.log(err);
     })
 
-  // // Don't delete. For future reference. This is sepecific for wed2
+  // // Don't delete. For future reference. This is sepecific for wed2 and wed3
   // // get translated phrases of one specific language and put in an array with the language as key
   // var phrase = req.body.phrase;
   // var language = req.body.language;
