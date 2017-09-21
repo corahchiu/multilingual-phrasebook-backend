@@ -57,9 +57,10 @@ app.get('/', function(req,res){
 app.post('/search', function(req, res){
   // get all equivalent phrases
   var phrase = req.body.phrase;
-  var language = req.body.language;
+  // var language = req.body.language;
   session
-    .run(`MATCH (n {phrase:'${phrase}', language:'${language}'})-[:translation]->(b) RETURN n,b`)
+    // .run(`MATCH (n {phrase:'${phrase}', language:'${language}'})-[:translation]->(b) RETURN n,b`)
+    .run(`MATCH (n {phrase:'${phrase}'})-[:translation]->(b) RETURN n,b`)    
     .then(result => {
       session.close();
       let allPhrases = {};
