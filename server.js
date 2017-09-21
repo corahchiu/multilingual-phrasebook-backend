@@ -121,11 +121,24 @@ app.post('/search', function(req, res){
   // })
 });
 
-
 app.post('/addphrase', function(req,res){
-  var phrase = req.body.phrase;
-  session.run(`CREATE (n:${phrase})`).then(() => {
+  var languageOne = req.body.languageOne;
+  var phraseOne = req.body.phraseOne;
+  var languageTwo = req.body.languageTwo;
+  var phraseTwo = req.body.phraseTwo;
+  session
+  .run(`
+    MERGE (n:${languageOne} {phrase:'${phraseOne}', language: '${languageOne}'})
+    MERGE (m:${languageTwo} {phrase:'${phraseTwo}', language: '${languageTwo}'})
+    MERGE (n)-[r:translation]->(m)
+    MERGE (m)-[s:translation]->(n)
+    RETURN n,m
+    `)
+  .then(result => {
     session.close();
+  })
+  .catch(function(err){
+    console.log(err);
   });
   
 })
