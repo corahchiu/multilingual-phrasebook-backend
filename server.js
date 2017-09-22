@@ -84,6 +84,7 @@ app.post('/search', function(req, res){
     })  
     .catch(function(err){
       console.log(err);
+      res.json({phrase: 'Doesn\'t exist'});
     })
 
   // // Don't delete. For future reference. This is sepecific for wed2 and wed3
